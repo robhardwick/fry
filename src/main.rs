@@ -36,28 +36,17 @@ fn main() -> Result<(), Error> {
     // Apply saturation adjustment
     if args.saturate != 1.0 {
         println!("🌈 Adjusting saturation (factor: {:.2})", args.saturate);
-        filter(&mut rgb_img, |r, g, b| {
-            let luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-
+        filter(&mut rgb_img, |p| {
             // Interpolate between grayscale and original color based on saturation
-            (
-                (r - luminance) * args.saturate + luminance,
-                (g - luminance) * args.saturate + luminance,
-                (b - luminance) * args.saturate + luminance,
-            )
+            let luminance = 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2];
+            p.map(|v| (v - luminance) * args.saturate + luminance)
         });
     }
 
     // Apply contrast adjustment
     if args.contrast != 1.0 {
         println!("🔆 Adjusting contrast (factor: {:.2})", args.contrast);
-        filter(&mut rgb_img, |r, g, b| {
-            (
-                (r - 0.5) * args.contrast + 0.5,
-                (g - 0.5) * args.contrast + 0.5,
-                (b - 0.5) * args.contrast + 0.5,
-            )
-        });
+        filter(&mut rgb_img, |p| p.map(|v| (v - 0.5) * args.contrast + 0.5));
     }
 
     img = DynamicImage::ImageRgb8(rgb_img);
@@ -96,18 +85,10 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn filter<F: Fn(f32, f32, f32) -> (f32, f32, f32)>(
-    img: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
-    filter_pixel: F,
-) {
+fn filter<F: Fn([f32; 3]) -> [f32; 3]>(img: &mut ImageBuffer<Rgb<u8>, Vec<u8>>, filter_pixel: F) {
     map_colors_mut(img, |p| {
-        let [r, g, b] = p.0;
-        let (r, g, b) = filter_pixel(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0);
-        [
-            (r.clamp(0.0, 1.0) * 255.0) as u8,
-            (g.clamp(0.0, 1.0) * 255.0) as u8,
-            (b.clamp(0.0, 1.0) * 255.0) as u8,
-        ]
-        .into()
+        filter_pixel(p.0.map(|v| v as f32 / 255.0))
+            .map(|v| (v.clamp(0.0, 1.0) * 255.0) as u8)
+            .into()
     });
 }
