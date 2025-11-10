@@ -13,20 +13,6 @@ use error::Error;
 fn main() -> Result<(), Error> {
     let args = Args::parse();
 
-    // Check if input file exists
-    if !args.input.exists() {
-        return Err(Error::InputFileNotFound(args.input.clone()));
-    }
-
-    // Validate quality range
-    if args.quality == 0 || args.quality > 100 {
-        return Err(Error::InvalidQuality(args.quality));
-    }
-
-    Ok(fry(args)?)
-}
-
-fn fry(args: Args) -> Result<(), Error> {
     println!("🖼️  Loading: {}", args.input.display());
     let mut img = image::open(&args.input)?;
 
@@ -36,7 +22,7 @@ fn fry(args: Args) -> Result<(), Error> {
     // Apply noise if enabled
     if args.noise > 0.0 {
         println!("📢 Applying noise (strength: {:.2})", args.noise);
-        gaussian_noise_mut(&mut rgb_img, args.noise, 0.0, args.seed);
+        gaussian_noise_mut(&mut rgb_img, args.noise as f64, 0.0, args.seed);
     }
 
     // Apply sharpen filter

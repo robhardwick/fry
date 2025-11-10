@@ -4,8 +4,6 @@ use std::fmt;
 pub enum Error {
     Image(image::ImageError),
     ProgressBar(indicatif::style::TemplateError),
-    InputFileNotFound(std::path::PathBuf),
-    InvalidQuality(u8),
 }
 
 impl From<image::ImageError> for Error {
@@ -25,12 +23,6 @@ impl fmt::Display for Error {
         match self {
             Error::Image(err) => write!(f, "Image error: {}", err),
             Error::ProgressBar(err) => write!(f, "Progress bar error: {}", err),
-            Error::InputFileNotFound(path) => {
-                write!(f, "Input file not found: {}", path.display())
-            }
-            Error::InvalidQuality(q) => {
-                write!(f, "Invalid quality: {}. Must be between 1 and 100.", q)
-            }
         }
     }
 }
